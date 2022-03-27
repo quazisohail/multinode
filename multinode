@@ -1,0 +1,129 @@
+make one master
+	{
+	task for all nodes
+	$ sudo vi /etc/hosts
+		<privateip> <dns> 
+		
+	on name node (no cat)ssh-keygen
+	on datanode cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+	
+	sudo mkdir -p /usr/local/hadoop/hdfs/data
+sudo chown -R ubuntu:ubuntu /usr/local/hadoop/hdfs/data
+	
+		
+launch nn ec2 
+copy .pem to ec2
+scp -i Hadoop.pem Hadoop.pem ubuntu@ec2-3-138-109-90.us-east-2.compute.amazonaws.com:~/
+sudo apt-get update && sudo apt-get -y dist-upgrade
+sudo apt-get -y install openjdk-8-jdk-headless
+
+install hadoop
+wget -c https://downloads.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
+tar xvzf hadoop-3.2.2.tar.gz
+mv hadoop-3.2.2 hadoop
+
+nano /.bashrc 
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_HOME=/home/ubuntu/hadoop
+export HADOOP_CONF=$HADOOP_HOME/conf
+export PATH=$PATH:$JAVA_HOME:$HADOOP_HOME/bin
+source /.bashrc
+
+run $ hadoop 
+it should show output
+
+$HADOOP_HOME/etc/hadoop/hadoop-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+$HADOOP_HOME/etc/hadoop/core-site.xml
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://<nnode>:9000</value>
+  </property>
+</configuration>
+
+$HADOOP_HOME/etc/hadoop/hdfs-site.xml
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>3</value>
+  </property>
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:///usr/local/hadoop/hdfs/data</value>
+  </property>
+</configuration>
+
+$HADOOP_HOME/etc/hadoop/mapred-site.xml
+<configuration>
+  <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+  </property>
+</configuration>
+
+$HADOOP_HOME/etc/hadoop/yarn-site.xml
+<configuration>
+ 
+  <!-- Site specific YARN configuration properties -->
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value><nnode></value>
+  </property>
+ 
+</configuration>
+
+for name node and snn
+$HADOOP_HOME/etc/hadoop/masters
+dns of name node 
+dns of snn
+
+$HADOOP_HOME/etc/hadoop/slaves
+dns of datanode 1
+dns of datanode 2
+
+on datanode 
+master will be empty
+slave its own datanode dns
+
+
+now deployment
+Namenode: hdfs namenode -format
+Namenode: $HADOOP_HOME/sbin/start-dfs.sh
+Namenode: $HADOOP_HOME/sbin/start-yarn.sh
+Namenode: $HADOOP_HOME/sbin/mr-jobhistory-daemon.sh start historyserver
+
+
+publicip of name node :50070
+
+now on name node
+.ssh/config
+
+Host nnode
+  HostName <nnode dns>
+  User ubuntu
+  IdentityFile ~/.ssh/id_rsa
+ 
+Host snnode
+  HostName <snn dns>
+  User ubuntu
+  IdentityFile ~/.ssh/id_rsa
+ 
+Host dnode2
+  HostName <dnode1 dns>
+  User ubuntu
+  IdentityFile ~/.ssh/id_rsa
+ 
+Host dnode3
+  HostName <dnode2 dns>
+  User ubuntu
+  IdentityFile ~/.ssh/id_rsa
+
+
+
+doubtOn Datanodes, Move the rsa_id to the authorized keys
